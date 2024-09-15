@@ -1,3 +1,17 @@
+atl_ranks.all_ranks = {
+    beginner = {description = "[Beginner]", color = "#42b0ee", min_level = 1, max_level = 3},
+    apprentice = {description = "[Apprentice]", color = "#2aa5eb", min_level = 4, max_level = 6},
+    novice = {description = "[Novice]", color = "#0697ea", min_level = 7, max_level = 10},
+    intermediate = {description = "[Intermediate]", color = "#0987cf", min_level = 11, max_level = 14},
+    advanced = {description = "[Advanced]", color = "#097abb", min_level = 15, max_level = 18},
+    expert = {description = "[Expert]", color = "#17db0c", min_level = 19, max_level = 22},
+    lord = {description = "[Lord]", color = "#f7dd05", min_level = 23, max_level = 30},
+    legend = {description = "[Legend]", color = "#d81313", min_level = 31, max_level = 45},
+
+    admin = {description = "[Admin]", color = "#d81313"},
+    developer = {description = "[Developer]", color = "#356aaa"},
+}
+
 function atl_ranks.get_exp_for_level(level)
     return math.ceil(160 * 1.5^level + 1)
 end
@@ -7,7 +21,8 @@ function atl_ranks.get_player_rank(player_name)
     if minetest.check_player_privs(player_name, {server = true}) then
         rank = "admin"
     else
-        rank = "beginner"
+        local level = atl_ranks.get_player_level(player_name)
+        rank = atl_ranks.get_rank_by_level(level)
     end
     return rank
 end
@@ -127,3 +142,16 @@ function atl_ranks.initialize_player(player_name)
         atl_ranks.set_player_rank(player_name, "admin")
     end
 end
+
+minetest.register_on_chat_message(function(player_name, message)
+    local rank = atl_ranks.get_player_rank(player_name)
+    local rank_info = atl_ranks.all_ranks[rank]
+    if not rank_info then
+        minetest.log("error", "Rank info not found for rank: " .. rank)
+        return true
+    end
+    local level = atl_ranks.get_player_level(player_name)
+    local prefix = minetest.colorize(rank_info.color, rank_info.description .. " [Lv." .. level .. "] ")
+    minetest.chat_send_all(prefix .. "<" .. player_name .. "> " .. message)
+    return true
+end)
